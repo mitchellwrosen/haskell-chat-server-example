@@ -1,23 +1,32 @@
 module Main where
 
-import Control.Concurrent (forkFinally)
-import Control.Monad      (forever)
-import Network            (PortID(..), accept, listenOn, withSocketsDo)
-import System.IO          (hClose)
+import Control.Concurrent (forkIO)
+import Control.Exception  (bracket)
+import Control.Monad      (forever, void)
+import Network.Socket
+import System.IO          (IOMode(..), hClose)
 import Text.Printf        (printf)
 
 import Server             (handleClient, newServer)
 
 main :: IO ()
-main = withSocketsDo $ do
+main = do
     server <- newServer
-    sock <- listenOn (PortNumber (fromIntegral port))
+    sock <- socket AF_INET Stream defaultProtocol
+    bind sock (SockAddrInet (fromIntegral port) (tupleToHostAddress (127, 0, 0, 1)))
+    listen sock 5
     _ <- printf "Listening on port %d\n" port
 
     forever $ do
-        (handle, host, port') <- accept sock
-        _ <- printf "Accepted connection from %s: %s\n" host (show port')
-        forkFinally (handleClient handle server) (\_ -> hClose handle)
+        bracket
+            (do
+                (sock', addr) <- accept sock
+                handle <- socketToHandle sock' ReadWriteMode
+                pure (handle, addr))
+            (\(handle, _addr) -> hClose handle)
+            (\(handle, SockAddrInet port' host) -> do
+                printf "Accepted connection from %s: %s\n" (show (hostAddressToTuple host)) (show port')
+                void (forkIO (handleClient handle server)))
 
 port :: Int
 port = 44444
