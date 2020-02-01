@@ -9,6 +9,7 @@ import           Control.Exception        (finally, mask)
 import           Control.Monad
 import           Data.Map                 (Map)
 import qualified Data.Map                 as M
+import           Data.Maybe               (fromMaybe)
 import qualified Data.Set                 as S
 import           System.IO
 import           Text.Printf              (hPrintf, printf)
@@ -92,7 +93,7 @@ tryAddClient server@Server{..} name handle = atomically $ do
             client <- newClient name handle
             notify client welcomeMsg
 
-            Just generalChat <- lookupChannel server defaultChannelName    -- Assume "General" chat always exists.
+            generalChat <- fromMaybe undefined <$> lookupChannel server defaultChannelName    -- Assume "General" chat always exists.
             _ <- clientJoinChannel JoinReasonConnected client generalChat  -- This will always be Nothing
 
             writeTVar serverClients $ M.insert name client clients

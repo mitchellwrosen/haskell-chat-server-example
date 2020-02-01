@@ -15,7 +15,8 @@ cabal-version:       >=1.10
 executable chat-server
   main-is:          Main.hs
 
-  other-modules:    Client
+  other-modules:    Channel
+                  , Client
                   , Server
                   , Types
 
@@ -26,7 +27,7 @@ executable chat-server
   build-depends:    async      >=2.0 && <3.0
                   , base       >=4.0 && <5.0
                   , containers >=0.5 && <0.6
-                  , network    >=2.0 && <3.0
+                  , network    >=2.8 && <3.2
                   , stm        >=2.0 && <3.0
 
   default-language: Haskell2010
